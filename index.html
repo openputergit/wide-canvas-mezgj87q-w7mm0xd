@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EdQuiz - Interactive Quiz Platform</title>
+    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://unpkg.com/qrcode-generator"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .neu-brutal {
+            border: 3px solid #000;
+            box-shadow: 5px 5px 0px #000;
+            transition: all 0.2s ease;
+        }
+        .neu-brutal:active {
+            transform: translate(5px, 5px);
+            box-shadow: none;
+        }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-[#8bcaea] min-h-screen font-['Poppins']" x-data="app()">
+    <!-- Landing Page -->
+    <div x-show="currentScreen === 'landing'" class="min-h-screen flex flex-col items-center justify-center p-4">
+        <img src="https://firebasestorage.googleapis.com/v0/b/widecanvas-d0dd4.appspot.com/o/logos%2FEdQuiz.png?alt=media&token=92fda5e7-a86a-421c-a941-7a177aeb4728" alt="EdQuiz Logo" class="w-48 mb-8">
+        <h1 class="text-4xl font-bold text-center mb-4">Welcome to EdQuiz!</h1>
+        <p class="text-xl mb-8 text-center">Challenge your brain, anytime, anywhere</p>
+        <button @click="currentScreen = 'login'" class="neu-brutal bg-[#8fc983] text-black font-bold py-3 px-8 rounded-lg text-lg">
+            Get Started
+        </button>
+    </div>
+
+    <!-- Login Screen -->
+    <div x-show="currentScreen === 'login'" x-cloak class="min-h-screen flex flex-col items-center justify-center p-4">
+        <button @click="currentScreen = 'landing'" class="neu-brutal absolute top-4 left-4 bg-white p-2 rounded-lg">
+            <i class="bi bi-arrow-left text-2xl"></i>
+        </button>
+        
+        <div class="w-full max-w-md">
+            <h2 class="text-2xl font-bold mb-8 text-center">Login</h2>
+            <div x-show="!otpSent" class="space-y-4">
+                <input type="tel" x-model="phone" placeholder="Enter mobile number" class="neu-brutal w-full p-3 rounded-lg">
+                <button @click="sendOTP()" class="neu-brutal w-full bg-[#8fc983] text-black font-bold py-3 rounded-lg">
+                    Send OTP
+                </button>
+            </div>
+            <div x-show="otpSent" x-cloak class="space-y-4">
+                <input type="text" x-model="otp" placeholder="Enter OTP" class="neu-brutal w-full p-3 rounded-lg">
+                <button @click="verifyOTP()" class="neu-brutal w-full bg-[#8fc983] text-black font-bold py-3 rounded-lg">
+                    Verify OTP
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Home Screen -->
+    <div x-show="currentScreen === 'home'" x-cloak class="min-h-screen p-4">
+        <div class="flex flex-col items-center justify-between h-full">
+            <div class="w-full max-w-md space-y-4 mb-auto mt-16">
+                <button @click="startQuiz()" class="neu-brutal w-full bg-[#8fc983] text-black font-bold py-4 rounded-lg text-xl">
+                    Start Quiz
+                </button>
+                <button @click="hostQuiz()" class="neu-brutal w-full bg-white text-black font-bold py-4 rounded-lg text-xl">
+                    Host Quiz
+                </button>
+                <button @click="joinQuiz()" class="neu-brutal w-full bg-[#8fc983] text-black font-bold py-4 rounded-lg text-xl">
+                    Join Quiz
+                </button>
+            </div>
+            
+            <!-- Bottom Navigation -->
+            <div class="fixed bottom-0 left-0 right-0 bg-white p-4 flex justify-around items-center neu-brutal">
+                <button @click="currentScreen = 'leaderboard'" class="text-2xl"><i class="bi bi-trophy"></i></button>
+                <button @click="currentScreen = 'home'" class="text-2xl"><i class="bi bi-house"></i></button>
+                <button @click="currentScreen = 'profile'" class="text-2xl"><i class="bi bi-person"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional screens here -->
+
+    <script>
+        function app() {
+            return {
+                currentScreen: 'landing',
+                phone: '',
+                otp: '',
+                otpSent: false,
+                userId: null,
+                quizData: {
+                    topic: '',
+                    difficulty: '',
+                    questionCount: 0
+                },
+
+                sendOTP() {
+                    // Simulate OTP send
+                    this.otpSent = true;
+                },
+
+                verifyOTP() {
+                    // Simulate OTP verification
+                    this.userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                    this.currentScreen = 'home';
+                },
+
+                startQuiz() {
+                    this.currentScreen = 'quiz-setup';
+                },
+
+                hostQuiz() {
+                    this.currentScreen = 'host-setup';
+                },
+
+                joinQuiz() {
+                    this.currentScreen = 'join-quiz';
+                },
+
+                generateQuestions() {
+                    return fetch('https://r0c8kgwocscg8gsokogwwsw4.zetaverse.one/ai', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': 'Bearer 2XYyzqPJx1fNNMfQk00zhcdqqH23',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            messages: [{
+                                role: "user",
+                                content: `Generate ${this.quizData.questionCount} multiple choice questions about ${this.quizData.topic} at ${this.quizData.difficulty} difficulty level`
+                            }]
+                        })
+                    })
+                    .then(response => response.json())
+                    .catch(error => console.error('Error:', error));
+                }
+            }
+        }
+    </script>
+<script>document.body.addEventListener('wheel', e => { if (!e.ctrlKey) return; e.preventDefault(); return }, { passive: false })</script>
+	</body>
+</html>
